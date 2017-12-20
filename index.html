@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>RxPeriments</title>
+    <link href="https://fonts.googleapis.com/css?family=Nova+Mono" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/papercss@1.1.0/dist/paper.min.css">
+    <link href="prism.css" rel="stylesheet" />
+    <link href="style.css" rel="stylesheet" />
+</head>
+
+<body>
+
+    <div class="container">
+        <section class="row flex-center">
+            <h1>
+                <img src="lab.svg" class="float-left no-border"> RxPeriences
+            </h1>
+        </section>
+        <section class="row flex-center">
+            <p>On commence à voir des Observables partout. Pourtant le concept, pas forcément difficile, renferme des pièges.
+                Je vous propose de faire quelques expériences sur la librairie
+                <a href="http://reactivex.io/rxjs/">RxJS</a>. Histoire d'éclaircir un peu tout ça.</a>
+            </p>
+        </section>
+        <section class="row flex-center">
+            <nav>
+                <button onclick="lab(1)" class="btn-small">1. Promise async ?</button>
+                <button onclick="lab(2)" class="btn-small">2. Observable (rx) async ?</button>
+                <button onclick="lab(3)" class="btn-small">3. countdown sans observable</button>
+                <button onclick="lab(4)" class="btn-small">4. countdown créé dans un observable</button>
+                <button onclick="lab(5)" class="btn-small">5. observable countdown avec 1 observer</button>
+                <button onclick="lab(6)" class="btn-small">6. observable countdown avec 2 observer</button>
+                <button onclick="lab(7)" class="btn-small">7. observable countdown avec 2 observer dont 1 après 3s</button>
+                <button onclick="lab(8)" class="btn-small">8. shared observable countdown avec 2 observer</button>
+                <button onclick="lab(9)" class="btn-small">9. shared observable countdown avec 2 observer dont 1 après 3s</button>
+                <button onclick="lab(10)" class="btn-small">10. shared observable countdown avec 2 observer dont 1 après 12s</button>
+                <button onclick="lab(11)" class="btn-small">11. observable countdown avec coundown créé en dehors de l'observable et pas d'observer</button>
+                <button onclick="lab(12)" class="btn-small">12. observable countdown avec coundown créé en dehors de l'observable et 1 observer</button>
+                <button onclick="lab(13)" class="btn-small">13. observable countdown avec coundown créé en dehors de l'observable et 2 observers</button>
+                <button onclick="lab(14)" class="btn-small">14. observable countdown avec coundown créé en dehors de l'observable et 2 observers dont 1 après 3s</button>
+                <button onclick="lab(15)" class="btn-small">15. observable countdown avec coundown créé en dehors de l'observable et 2 observers dont 1 après 12s</button>
+            </nav>
+        </section>
+
+        <div id="lab1" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 1 : une Promise est-elle asynchrone ?</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    On ne va pas se mentir, la 1ere fois qu'on a entendu parler des Observables, on s'est tous dit "Ah ben ouais c'est des Promises++ en fait". Et donc on branche notre compréhension des Observables sur celle des Promises.
+                </p>
+                <p class="margin-small">
+                    On est tous d'accord qu'une Promise, c'est asynchrone ? Et donc notre 1ere expérience devrait donner <i>avant, après, 1</i>
+                </p>
+                <pre><code class="language-typescript">
+const promise = Promise.resolve(1);
+log('avant');
+promise.then(log);
+log('après');
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments1()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Ok ! Pas de surprise (normalement ...). Pour le moment tout va bien.
+                </p>
+            </section>
+
+        </div>
+
+        <div id="lab2" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 2 : un Observable est-il asynchrone ?</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    Donc si on suit notre schéma mental "Observable = Promise sous stéroïde", on peut penser qu'un Observable c'est asynchrone aussi.
+                </p>
+                <pre><code class="language-typescript">
+import { of } from 'rxjs/observable/of';
+const observable$ = of(1);
+log('avant');
+observable$.subscribe(log);
+log('après');
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments2()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Zut !!! Et bien oui, un Observable n'est pas nécessairement asynchrone. En fait tout dépend de ce qu'il contient. Je me suis déjà fait pincer les doigts avec ça. Par exemple en utilisant un élément dans un subscribe synchrone, élément initialisé juste la ligne d'en dessous ...
+                </p>
+                <pre><code class="language-typescript">
+somesyncobservable$.subscribe(() => {
+    console.log(this.user.name);
+});
+this.user = {
+    name: "Thomas",
+}
+                </code></pre>
+            </section>
+
+        </div>
+
+        <div id="lab3" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 3 : 3. countdown sans observable</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    Avant de vraiment se lancer dans le dur, mettons en place notre expérience. Notre code est simple : un bête compteur décroissant de 10 à 0. À chaque seconde passée on éxécute une fonction passée en argument. Arrivé à 0, on lance une autre fonction, elle aussi passée en argument.
+                </p>
+                <p class="margin-small">
+                    Pour la démonstration, on a juste ajouté l'affichage.
+                </p>
+                <pre><code class="language-typescript">
+function countdown(onprogress = console.log, onend = console.log) {
+    let time = 10;
+    onprogress(time);
+    const interval = setInterval(() => {
+        time--;
+        onprogress(time);
+        if (time === 0) {
+            onend('terminated')
+            clearInterval(interval);
+        }
+    }, 1000);
+}
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments3()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+        </div>
+
+        <div id="lab4" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 4 : countdown créé dans un observable</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    On crée un <i>ObservableCountdown</i>. C'est à dire un Observable qui contient un countdown. Et qui emet à chaque seconde.
+                </p>
+                <pre><code class="language-typescript">
+function observableCountdown () {
+    return Observable.create(observer => {
+        countdown(observer.next.bind(observer), observer.complete.bind(observer));
+    });
+}
+const observableCountDown$ = observableCountdown();
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments4()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Ben alors ??? Il ne se passe rien ! Et oui, un Observable est lazy. Il ne déclenche sa source qu'une fois observé. Au contraire d'une Promise, qui se lance dès qu'elle est créée.
+                </p>
+                <pre><code class="language-typescript">
+const httpPromise = fetch('http://byteclub.fr'); // la requête est lancée tout de suite
+const httpObservable$ = rxfetch('http://byteclub.fr'); // la requête n'est pas lancée
+// note : rxfetch n'existe pas hein ...
+                </code></pre>
+            </section>
+
+        </div>
+
+        <div id="lab5" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 5 : observable countdown avec 1 Observer</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    On crée un Observable countdown et on l'observe.
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown();
+observableCountDown$.subscribe(log, null, log);
+/* // équivalent à
+observableCountDown$.subscribe({
+    next: log,
+    complete: log,
+});
+*/
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments5()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Ça marche comme attendu. Donc si on veut qu'un process contenu dans un Observable se lance, il faut l'observer. Et ça reste vrai même si on crée un autre Observable depuis le 1er.
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown();
+observableCountDown$.map(x => x * 2); // le countdown n'est pas lancé pour autant.
+                </code></pre>
+            </section>
+
+        </div>
+
+        <div id="lab6" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 6 : observable countdown avec 2 Observers</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    Continuons avec notre Observable countdown. Mais cette fois, imaginons que nous souhaitons faire deux actions à chaque seconde émise. On ajoute simplement un autre Observer, non ?
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown();
+observableCountDown$.subscribe(log, null, log);
+observableCountDown$.subscribe(log, null, log);
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments6()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Whaaaat ???? J'ai <strong>2</strong> compteurs maintenant ! Et ouais ... Par défaut, à chaque fois qu'on ajoute un Observer à un Observable, il initialise sa source. C'est ce qu'on appelle un Observable <strong>cold</strong>.
+                </p>
+                <p class="margin-small">
+                    On peut comparer ça à une vidéo youtube (ou viméo, hein). Lorsqu'on clique sur play, on demande au serveur de nous streamer la vidéo. Mais si vous ouvre un autre onglet sur la même page youtube et qu'on clique sur play, on verra bien toute la vidéo depuis le début.
+                </p>
+            </section>
+        </div>
+
+        <div id="lab7" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 7 : observable countdown avec 2 observer dont 1 après 3s</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    On vient de voir que 2 subscribes lance 2 compteurs. Mais peut-être sont-ils synchronisés ? Décalons le 2nd ajout d'Observer dans le temps.
+                </p>
+                <pre><code class="language-typescript">
+                        const observableCountDown$ = observableCountdown();
+                        observableCountDown$.subscribe(log, null, log);
+                        setTimeout(() => observableCountDown$.subscribe(log, null, log), 3000);
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments7()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Pas de synchronisation. Ce sont bien 2 compteurs complètement indépendants.
+                </p>
+            </section>
+
+        </div>
+
+<div class="margin-top-large">
+
+    <h4 class="row flex-center">
+        Une petite explication de comment fonctionne un "Cold" Observable.
+    </h4>
+
+    <div class="row">
+
+        <div class="col col-6">
+            <img src="images/01.jpg" alt="">
+            <p><strong>1.</strong> Tout d'abord on a un producteur (une source de données). Dans nos expériences, c'est le coutdown.</p>
+        </div>
+
+        <div class="col col-6">
+            <img src="images/02.jpg" alt="">
+            <p><strong>2.</strong> Un "Cold" Observable englobe notre producteur. Mais le producteur n'existe pas encore. La source de données ne produit pour le moment aucune données.</p>
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col col-6">
+            <img src="images/03.jpg" alt="">
+            <p><strong>3.</strong> Voici un Observer. Et il est rouge.</p>
+        </div>
+
+        <div class="col col-6">
+            <img src="images/04.jpg" alt="">
+            <p><strong>4.</strong> L'Observer rouge "observe" l'Observable. C'est le "subscribe".</p>
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col col-6">
+            <img src="images/05.jpg" alt="">
+            <p><strong>5.</strong> L'Observable s'aperçoit qu'il est observé. Vite il fabrique une source de donnée.</p>
+        </div>
+
+        <div class="col col-6">
+            <img src="images/06.jpg" alt="">
+            <p><strong>6.</strong> La source de données commence à balancer de l'information.</p>
+        </div>
+
+    </div>
+
+
+    <div class="row">
+
+        <div class="col col-6">
+            <img src="images/07.jpg" alt="">
+            <p><strong>7.</strong> L'Observable relaye l'information à l'Observer.</p>
+        </div>
+
+        <div class="col col-6">
+            <img src="images/08.jpg" alt="">
+            <p><strong>8.</strong> Oh un autre Observer (vert celui-ci). L'Observable fabrique une autre source de données et c'est reparti.</p>
+        </div>
+
+    </div>
+
+</div>
+
+        <div id="lab8" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 8 : shared observable countdown avec 2 observer</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    Ok mais du coup comment peut-on faire pour éviter ça ? On va rendre  "hot" notre "cold" Observable. On va le réchauffer. L'idée c'est que lorque un Observer s'inscrit, si il y a un compteur en route on utilisera ce compteur. Sinon on en crée un.
+                </p>
+                <p class="margin-small">
+                    Pour ça on utilise l'opérateur <strong>share</strong>.
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown()
+    // on utilise la nouvelle syntaxe https://github.com/ReactiveX/rxjs/blob/ffaf53843de875689c50ac776ce744683c45b012/doc/lettable-operators.md
+    .pipe(share());
+observableCountDown$.subscribe(log, null, log);
+observableCountDown$.subscribe(log, null, log);
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments8()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Banco ! On a bien 1 seul compteur et on double les logs.
+                </p>
+            </section>
+
+        </div>
+
+        <div id="lab9" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 9 : shared observable countdown avec 2 observer dont 1 après 3s</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    Vérifions que plusieurs Observer sur un Observable countdown "partagé" sont bien synchronizés.
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown()
+    .pipe(share());
+observableCountDown$.subscribe(log, null, log);
+setTimeout(() => observableCountDown$.subscribe(log, null, log), 3000);
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments9()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Ça roule ! C'est bien la même information qui est passée aux 2 Observers.
+                </p>
+            </section>
+
+        </div>
+
+        <div id="lab10" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 10 : shared observable countdown avec 2 observer dont 1 après 12s</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">
+                    Mais que se passe-t-il si un Observer est en retard ? Si le compteur est fini ?
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown(lab)
+    .pipe(share());
+observableCountDown$.subscribe(log, null, log);
+setTimeout(() => observableCountDown$.subscribe(log, null, log), 12000);
+                </code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments10()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+            <section class="row">
+                <p class="margin-small">
+                    Un nouveau compteur est créé. En fait voilà le fonctionnement (tenez-vous bien) :
+                </p>
+                <ul>
+                    <li>
+                        1er Observer (a). Un Observable/Observer (Subject) est créé qui encapsule le Observable countdown et l'observe (et donc création du countdown).
+                    </li>
+                    <li>
+                        Chaque fois que le Observable countdown émet, l'information est relayée à l'Observer (a) par le Subject.
+                    </li>
+                    <li>
+                        Si un autre Observer (b) est ajouté avant la fin du compteur. Il est juste ajouté à une liste d'Observer sur le Subject.
+                    </li>
+                    <li>
+                        Maintenant chaque fois que le Observable countdown émet, l'information est relayée aux Observers (a et b) par le Subject.
+                    </li>
+                    <li>
+                        Quand le countdown se termine, le Subject disparait.
+                    </li>
+                    <li>
+                        Maintenant on ajoute un Observer (c). On se retrouve au cas 1. Un Subject est créé ...
+                    </li>
+                </ul>
+            </section>
+
+        </div>
+
+        <div id="lab11" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 11 : observable countdown avec 2 observer dont 1 après 3s</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Eum iusto consequatur aliquam, magni porro officia
+                    mollitia sed? Architecto, doloremque! Consectetur iusto, hic totam eum eaque nulla alias explicabo similique
+                    deserunt!
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown(lab);
+observableCountDown$.subscribe(log);
+setTimeout(() => observableCountDown$.subscribe(log), 3000);
+</code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments11()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+        </div>
+
+        <div id="lab12" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 12 : observable countdown avec 2 observer dont 1 après 3s</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Eum iusto consequatur aliquam, magni porro officia
+                    mollitia sed? Architecto, doloremque! Consectetur iusto, hic totam eum eaque nulla alias explicabo similique
+                    deserunt!
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown(lab);
+observableCountDown$.subscribe(log);
+setTimeout(() => observableCountDown$.subscribe(log), 3000);
+</code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments12()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+        </div>
+
+        <div id="lab13" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 13 : observable countdown avec 2 observer dont 1 après 3s</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Eum iusto consequatur aliquam, magni porro officia
+                    mollitia sed? Architecto, doloremque! Consectetur iusto, hic totam eum eaque nulla alias explicabo similique
+                    deserunt!
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown(lab);
+observableCountDown$.subscribe(log);
+setTimeout(() => observableCountDown$.subscribe(log), 3000);
+</code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments13()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+        </div>
+
+        <div id="lab14" class="margin-top-large">
+            <section class="row flex-center margin-bottom-small">
+                <h4 class="margin-bottom-small">RxPerience 14 : observable countdown avec 2 observer dont 1 après 3s</h4>
+            </section>
+
+            <section class="row">
+                <p class="margin-small">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Eum iusto consequatur aliquam, magni porro officia
+                    mollitia sed? Architecto, doloremque! Consectetur iusto, hic totam eum eaque nulla alias explicabo similique
+                    deserunt!
+                </p>
+                <pre><code class="language-typescript">
+const observableCountDown$ = observableCountdown(lab);
+observableCountDown$.subscribe(log);
+setTimeout(() => observableCountDown$.subscribe(log), 3000);
+</code></pre>
+            </section>
+
+            <section class="row flex-right">
+                <button class="background-success" onClick="rxPeriments14()">Lancer l'expérience</button>
+            </section>
+
+            <div class="row flex-spaces flex-middle">
+                <div class="lab shadow border"></div>
+                <div class="log shadow border"></div>
+            </div>
+
+        </div>
+
+        <div id="lab15" class="margin-top-large">
+                <section class="row flex-center margin-bottom-small">
+                    <h4 class="margin-bottom-small">RxPerience 15 : observable countdown avec 2 observer dont 1 après 3s</h4>
+                </section>
+
+                <section class="row">
+                    <p class="margin-small">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Eum iusto consequatur aliquam, magni porro officia
+                        mollitia sed? Architecto, doloremque! Consectetur iusto, hic totam eum eaque nulla alias explicabo similique
+                        deserunt!
+                    </p>
+                    <pre><code class="language-typescript">
+    const observableCountDown$ = observableCountdown(lab);
+    observableCountDown$.subscribe(log);
+    setTimeout(() => observableCountDown$.subscribe(log), 3000);
+    </code></pre>
+                </section>
+
+                <section class="row flex-right">
+                    <button class="background-success" onClick="rxPeriments15()">Lancer l'expérience</button>
+                </section>
+
+                <div class="row flex-spaces flex-middle">
+                    <div class="lab shadow border"></div>
+                    <div class="log shadow border"></div>
+                </div>
+
+            </div>
+
+
+    </div>
+    <script src="bundle.js"></script>
+    <script src="prism.js"></script>
+</body>
+
+</html>

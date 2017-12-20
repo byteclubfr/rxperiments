@@ -1,0 +1,46 @@
+div.lab {
+    display: flex;
+    justify-content: center;
+    width: 40%;
+    height: 170px;
+}
+
+div.countdown {
+    font-family: 'Nova Mono', monospace;
+    font-size: 2em;
+    background: #888;
+    color: #fff;
+    padding: .5em;
+    border-radius: 1em;
+    margin: 1em;
+}
+
+div.countdown.terminated {
+    background: firebrick;
+}
+
+div.log {
+    margin: 0;
+    padding: .2em 1em;
+    height: 170px;
+    width: 40%;
+    overflow-y: scroll;
+}
+
+nav {
+    line-height: 40px;
+    text-align: center;
+}
+
+pre,
+code {
+    width: 100%;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+h1 img {
+    width: auto;
+    max-width: none;
+    height: 62%;
+}
